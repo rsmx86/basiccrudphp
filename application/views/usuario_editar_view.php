@@ -1,46 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title><?php echo $titulo; ?></title>
-</head>
-<body>
-    <h1><?php echo $titulo; ?></h1>
-    <p><a href="<?php echo site_url('usuario'); ?>">Voltar para a Listagem de Usuários</a></p>
-    <hr>
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h4 class="font-weight-bold text-dark mb-1">
+            <i class="fas fa-user-shield text-primary mr-2"></i><?= $titulo; ?>
+        </h4>
+        <p class="text-muted small mb-0">Gerencie as permissões e dados de login do colaborador.</p>
+    </div>
+    <div class="col-auto">
+        <a href="<?= site_url('usuario'); ?>" class="btn btn-white btn-sm border px-3 shadow-sm text-muted text-decoration-none">
+            <i class="fas fa-chevron-left mr-1"></i> Voltar
+        </a>
+    </div>
+</div>
 
-    <?php if ($this->session->flashdata('erro')): ?>
-        <p style="color: red;"><?php echo $this->session->flashdata('erro'); ?></p>
-    <?php endif; ?>
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        
+        <?php if ($this->session->flashdata('erro')): ?>
+            <div class="alert alert-danger shadow-sm border-0">
+                <i class="fas fa-exclamation-circle mr-2"></i> <?= $this->session->flashdata('erro'); ?>
+            </div>
+        <?php endif; ?>
 
-    <?php if (validation_errors()): ?>
-        <div style="color: red; border: 1px solid red; background-color: #ffe0e0; padding: 10px; margin-bottom: 15px;">
-            <h4>Erros de Validação:</h4>
-            <?php echo validation_errors(); ?>
+        <?php if (validation_errors()): ?>
+            <div class="alert alert-warning shadow-sm border-0 small text-dark">
+                <strong>Verifique os campos abaixo:</strong><br>
+                <?= validation_errors(); ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <?php echo form_open('usuario/atualizar/' . $usuario['id']); ?>
+                    
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-muted text-uppercase">E-mail (Login)</label>
+                        <input type="email" class="form-control bg-light border-0" value="<?= $usuario['email']; ?>" disabled>
+                        <small class="text-info font-italic">O e-mail é o identificador e não pode ser alterado.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="small font-weight-bold text-muted text-uppercase">Nome Completo</label>
+                        <input type="text" name="nome" class="form-control" value="<?= set_value('nome', $usuario['nome']); ?>" required placeholder="Digite o nome completo">
+                    </div>
+
+                    <div class="form-group mt-4 p-3 border rounded bg-light">
+                        <label class="small font-weight-bold text-primary text-uppercase d-block mb-2">
+                            <i class="fas fa-layer-group mr-1"></i> Nível de Permissão
+                        </label>
+                        <select name="nivel_acesso" class="form-control custom-select border-primary font-weight-bold text-primary">
+                            <option value="comum" <?= set_select('nivel_acesso', 'comum', ($usuario['nivel_acesso'] == 'comum')); ?>>USUÁRIO COMUM</option>
+                            <option value="admin" <?= set_select('nivel_acesso', 'admin', ($usuario['nivel_acesso'] == 'admin')); ?>>ADMINISTRADOR</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="small font-weight-bold text-muted text-uppercase">Alterar Senha</label>
+                        <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para manter a atual">
+                        <small class="text-muted">Mínimo 6 caracteres se for alterar.</small>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-5 border-top pt-4">
+                        <a href="<?= site_url('usuario'); ?>" class="btn btn-link text-muted mr-3 text-decoration-none">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-5 font-weight-bold shadow-sm">
+                            <i class="fas fa-save mr-2"></i> SALVAR ALTERAÇÕES
+                        </button>
+                    </div>
+
+                <?php echo form_close(); ?>
+            </div>
         </div>
-    <?php endif; ?>
-
-    <?php echo form_open('usuario/atualizar/' . $usuario['id']); ?>
-
-        <label for="email">E-mail (Login):</label><br>
-        <input type="email" name="email" value="<?php echo $usuario['email']; ?>" size="50" disabled><br>
-        <small>O e-mail não pode ser alterado por aqui, pois é o login principal.</small><br><br>
-
-        <label for="nome">Nome Completo:</label><br>
-        <input type="text" name="nome" value="<?php echo set_value('nome', $usuario['nome']); ?>" size="50"><br><br>
-        
-        <label for="nivel_acesso">Nível de Acesso:</label><br>
-        <select name="nivel_acesso">
-            <option value="comum" <?php echo set_select('nivel_acesso', 'comum', ($usuario['nivel_acesso'] == 'comum')); ?>>COMUM</option>
-            <option value="admin" <?php echo set_select('nivel_acesso', 'admin', ($usuario['nivel_acesso'] == 'admin')); ?>>ADMINISTRADOR</option>
-        </select><br><br>
-        
-        <label for="nova_senha">Nova Senha (Deixe em branco para não alterar):</label><br>
-        <input type="password" name="nova_senha" size="50"><br>
-        <small>Mínimo 6 caracteres.</small><br><br>
-
-        <button type="submit">Salvar Alterações</button>
-        
-    <?php echo form_close(); ?>
-
-</body>
-</html>
+    </div>
+</div>

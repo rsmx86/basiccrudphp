@@ -1,158 +1,122 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title><?php echo $titulo; ?></title>
-    <style>
-        body {
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .header-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
-        
-        .btn {
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: bold;
-            display: inline-block;
-            transition: 0.3s;
-        }
-        .btn-add { background-color: #28a745; color: white; }
-        .btn-add:hover { background-color: #218838; }
-        .btn-back { background-color: #6c757d; color: white; margin-right: 10px; }
-        .btn-back:hover { background-color: #5a6268; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th {
-            background-color: #f8f9fa;
-            color: #666;
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #dee2e6;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-        tr:hover { background-color: #f9f9f9; }
-
-        /* Estilo dos Níveis de Acesso */
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .badge-admin { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .badge-comum { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #bee5eb;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header-area">
-        <div>
-            <h1>⚙️ Gestão de Usuários</h1>
-            <small>Gerencie quem tem acesso ao sistema e seus níveis de permissão.</small>
-        </div>
-        <div>
-            <a href="<?php echo site_url('cadastro'); ?>" class="btn btn-back">← Voltar aos Cadastros</a>
-            <a href="<?php echo site_url('usuario/criar'); ?>" class="btn btn-add">+ Criar Novo Usuário</a>
-        </div>
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h4 class="font-weight-bold text-dark mb-1">Usuários do Sistema</h4>
+        <p class="text-muted small mb-0">Gerencie acessos e níveis de permissão dos colaboradores.</p>
     </div>
-
-    <?php if ($this->session->flashdata('sucesso')): ?>
-        <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
-            <?php echo $this->session->flashdata('sucesso'); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($this->session->flashdata('erro')): ?>
-        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
-            <?php echo $this->session->flashdata('erro'); ?>
-        </div>
-    <?php endif; ?>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>E-mail (Login)</th>
-                <th>Nível</th>
-                <th>Criado Por</th>
-                <th style="text-align: center;">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!empty($usuarios)): ?>
-                <?php foreach ($usuarios as $user): ?>
-                <tr>
-                    <td><?php echo $user['id']; ?></td>
-                    <td><strong><?php echo $user['nome']; ?></strong></td>
-                    <td><?php echo $user['email']; ?></td>
-                    <td>
-                        <span class="badge <?php echo ($user['nivel_acesso'] == 'admin') ? 'badge-admin' : 'badge-comum'; ?>">
-                            <?php echo $user['nivel_acesso']; ?>
-                        </span>
-                    </td>
-                    <td>
-                        <small style="color: #888;">
-                            <?php echo !empty($user['nome_criador']) ? $user['nome_criador'] : '<span style="color:#ccc">Sistema</span>'; ?>
-                        </small>
-                    </td>
-                    <td style="text-align: center;">
-                        <a href="<?php echo site_url('usuario/editar/'.$user['id']); ?>" 
-                           style="color: #007bff; text-decoration: none; font-weight: bold;">
-                           Editar Nível
-                        </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6" style="text-align: center; color: #999; padding: 30px;">Nenhum usuário encontrado.</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="col-auto">
+        <a href="<?= site_url('usuario/criar'); ?>" class="btn btn-success shadow-sm px-4">
+            <i class="fas fa-user-plus mr-2"></i> Novo Usuário
+        </a>
+    </div>
 </div>
 
-</body>
-</html>
+<?php if ($this->session->flashdata('sucesso')): ?>
+    <div class="alert alert-success border-0 shadow-sm mb-4 animate__animated animate__fadeIn">
+        <i class="fas fa-check-circle mr-2"></i> <?= $this->session->flashdata('sucesso'); ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($this->session->flashdata('erro')): ?>
+    <div class="alert alert-danger border-0 shadow-sm mb-4 animate__animated animate__fadeIn">
+        <i class="fas fa-exclamation-circle mr-2"></i> <?= $this->session->flashdata('erro'); ?>
+    </div>
+<?php endif; ?>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="border-0" width="60">ID</th>
+                    <th class="border-0">Nome</th>
+                    <th class="border-0">E-mail (Login)</th>
+                    <th class="border-0 text-center">Nível</th>
+                    <th class="border-0">Criado Por</th>
+                    <th class="border-0 text-center" width="200">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($usuarios)): foreach ($usuarios as $user): ?>
+                <tr>
+                    <td class="align-middle text-muted">#<?= $user['id']; ?></td>
+                    <td class="align-middle font-weight-bold text-dark"><?= $user['nome']; ?></td>
+                    <td class="align-middle"><?= $user['email']; ?></td>
+                    <td class="align-middle text-center">
+                        <?php 
+                            // Lógica robusta para o badge
+                            $nivelRaw = isset($user['nivel_acesso']) ? trim(strtolower($user['nivel_acesso'])) : '';
+                            $isAdmin = ($nivelRaw === 'admin');
+                            
+                            $classeBadge = $isAdmin ? 'badge-admin' : 'badge-comum';
+                            $labelBadge  = $isAdmin ? 'ADMIN' : 'COMUM';
+                        ?>
+                        <span class="badge <?= $classeBadge; ?> py-2 px-3">
+                            <?= $labelBadge; ?>
+                        </span>
+                    </td>
+                    <td class="align-middle">
+                        <small class="text-muted">
+                            <i class="fas fa-user-tag mr-1"></i>
+                            <?= $user['nome_criador'] ?? 'Sistema'; ?>
+                        </small>
+                    </td>
+                    <td class="align-middle text-center">
+                        <div class="btn-group shadow-sm">
+                            <a href="<?= site_url('usuario/editar/'.$user['id']); ?>" class="btn btn-sm btn-white text-primary border" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-white text-danger border" onclick="confirmarExclusao(<?= $user['id']; ?>)" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; else: ?>
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-slash fa-2x mb-3 d-block"></i>
+                            Nenhum usuário encontrado.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirUsuario" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title font-weight-bold">Confirmar Exclusão</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="formExcluir" method="POST">
+                <div class="modal-body p-4 text-center">
+                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                    <p class="text-dark">Atenção: Esta ação é permanente.</p>
+                    <div class="alert alert-light border small text-left">
+                        Os registros vinculados a este usuário serão movidos para o seu perfil administrativo.
+                    </div>
+                    <div class="form-group text-left">
+                        <label class="font-weight-bold small">CONFIRME COM SUA SENHA MASTER:</label>
+                        <input type="password" name="senha_master" class="form-control form-control-lg border-danger" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-link text-muted" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm">Confirmar e Deletar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarExclusao(id) {
+    $('#formExcluir').attr('action', "<?= site_url('usuario/deletar/'); ?>" + id);
+    $('#modalExcluirUsuario').modal('show');
+}
+</script>

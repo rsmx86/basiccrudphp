@@ -5,132 +5,148 @@ class Usuario extends CI_Controller {
 
     public function __construct() {
         parent::__construct();
-        $this->load->helper(['form', 'url']);
+        $this->load->model('usuario_model');
         $this->load->library('form_validation');
-        $this->load->model('usuario_model'); 
-        
-        // RESTRIÇÃO GERAL: Garante que apenas usuários logados podem acessar qualquer método deste Controller
+
+        // Se não estiver logado, tchau.
         if (!$this->session->userdata('logado')) {
             redirect('auth');
         }
-        
-        // RESTRIÇÃO DE NÍVEL: Verifica se o usuário logado tem permissão de Admin (necessária para criar/salvar)
-        if ($this->session->userdata('nivel_acesso') !== 'admin') {
-            // Se não for admin, impede o acesso e redireciona para a listagem principal
-            $this->session->set_flashdata('erro', 'Acesso negado: Somente administradores podem gerenciar usuários do sistema.');
+
+        // Trava de Nível: Apenas admin acessa gestão de usuários
+        $liberados = ['perfil', 'atualizar_perfil', 'processar_troca_senha'];
+        $metodo = $this->router->fetch_method();
+
+        if (!in_array($metodo, $liberados) && $this->session->userdata('nivel_acesso') !== 'admin') {
             redirect('cadastro');
         }
     }
 
-    public function criar() {
-        $data['titulo'] = 'Criar Novo Usuário do Sistema';
+    public function index() {
+        $data = [
+            'titulo'   => "Gerenciamento de Usuários",
+            'usuarios' => $this->usuario_model->get_all_users()
+        ];
         
-        // A checagem de Admin já foi feita no __construct, então o Admin pode prosseguir.
-        $this->load->view('usuario_form_view', $data); 
+        $this->load->view('includes/header', $data);
+        $this->load->view('usuario_listagem_view', $data);
+        $this->load->view('includes/footer');
+    }
+
+    public function criar() {
+        $data['titulo'] = 'Novo Usuário';
+        $this->load->view('includes/header', $data);
+        $this->load->view('usuario_form_view', $data);
+        $this->load->view('includes/footer');
     }
 
     public function salvar() {
-        // As regras de validação permanecem robustas
+        // Validações básicas e únicas por e-mail
         $this->form_validation->set_rules('nome', 'Nome', 'required|min_length[3]');
-        // 'is_unique' é fundamental para garantir que não haja emails duplicados
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[usuarios.email]');
         $this->form_validation->set_rules('senha', 'Senha', 'required|min_length[6]');
-        $this->form_validation->set_rules('confirma_senha', 'Confirmação de Senha', 'required|matches[senha]');
-        
+
         if ($this->form_validation->run() == FALSE) {
-            // Se falhar na validação, volta ao formulário (chamando criar() novamente para recarregar a view)
             $this->criar();
         } else {
-            // Obtém o nome do Admin logado para usar na mensagem de sucesso
-            $admin_nome = $this->session->userdata('nome_usuario'); 
-            
-            $data = array(
-                'nome' => $this->input->post('nome'),
-                'email' => $this->input->post('email'),
-                // USANDO PASSWORD_DEFAULT: É o método mais seguro e recomendado (substitui o antigo md5/sha1/hash5)
-                'senha' => password_hash($this->input->post('senha'), PASSWORD_DEFAULT),
-                'nivel_acesso' => 'comum', // Novo usuário criado pelo Admin é sempre 'comum'
-				'admin_criador_id' => $this->session->userdata('id_usuario')
-            );
-
-            if ($this->usuario_model->inserir_usuario($data)) {
-                $this->session->set_flashdata('sucesso', "Usuário criado com sucesso por {$admin_nome}. Nível de acesso definido como 'comum'.");
-            } else {
-                $this->session->set_flashdata('erro', 'Erro desconhecido ao tentar criar o usuário no banco de dados.');
-            }
-            // Redireciona para a listagem principal, onde o Admin pode ver o resultado
-            redirect('cadastro'); 
+            $dados = [
+                'nome'             => $this->input->post('nome'),
+                'email'            => $this->input->post('email'),
+                'senha'            => password_hash($this->input->post('senha'), PASSWORD_DEFAULT),
+                'nivel_acesso'     => 'comum',
+                'admin_criador_id' => $this->session->userdata('id_usuario')
+            ];
+            $this->usuario_model->inserir_usuario($dados);
+            $this->session->set_flashdata('sucesso', 'Usuário criado!');
+            redirect('usuario');
         }
     }
-	// Dentro de application/controllers/Usuario.php
-// o __construct() já garante que só o Admin pode estar aqui!!!!
 
-	public function index() {
-		$data['titulo'] = 'Gerenciamento de Usuários do Sistema';
-		$data['usuarios'] = $this->usuario_model->get_all_users(); // Chama a nova função
-    
-		$this->load->view('usuario_listagem_view', $data); // Iremos criar esta View?
-	}
-
-	// Função para carregar os dados de um usuário no formulário de edição
-public function editar($id) {
-    $this->load->model('usuario_model'); // Garantindo que o Model está carregado
-    
-    $data['usuario'] = $this->usuario_model->get_user_by_id($id);
-
-    if (empty($data['usuario'])) {
-        $this->session->set_flashdata('erro', 'Usuário não encontrado.');
-        redirect('usuario');
-        return;
-    }
-    
-    // Regra de segurança: O Admin não pode editar a si mesmo (para evitar se despromover)
-    if ($data['usuario']['id'] == $this->session->userdata('id_usuario')) {
-        $this->session->set_flashdata('erro', 'Você não pode editar o seu próprio perfil de administrador por aqui.');
-        redirect('usuario');
-        return;
-    }
-
-    $data['titulo'] = 'Editar Usuário: ' . $data['usuario']['nome'];
-    $this->load->view('usuario_editar_view', $data); // Esta View será o próximo passo
-}
-
-// Função para processar o formulário de edição e salvar as alterações
-public function atualizar($id) {
-    $this->load->model('usuario_model'); // Garantindo que o Model está carregado
-    $this->load->library('form_validation');
-
-    // Validação da mudança de Nível de Acesso (apenas 'admin' ou 'comum')
-    $this->form_validation->set_rules('nome', 'Nome', 'required|min_length[3]');
-    $this->form_validation->set_rules('nivel_acesso', 'Nível de Acesso', 'required|in_list[admin,comum]');
-
-    if ($this->form_validation->run() == FALSE) {
-        // Falha na validação: retorna para a tela de edição
-        $this->editar($id);
-    } else {
-        $dados_atualizados = array(
-            'nome' => $this->input->post('nome'),
-            'nivel_acesso' => $this->input->post('nivel_acesso') // O campo chave para promoção/degradação
-        );
+    public function editar($id) {
+        $data = [
+            'usuario' => $this->usuario_model->get_user_by_id($id),
+            'titulo'  => 'Editar Usuário'
+        ];
         
-        // Lógica opcional para alterar a senha
+        if (!$data['usuario']) redirect('usuario');
+
+        $this->load->view('includes/header', $data);
+        $this->load->view('usuario_editar_view', $data);
+        $this->load->view('includes/footer');
+    }
+
+    public function atualizar($id) {
+        $dados = [
+            'nome'         => $this->input->post('nome'),
+            'nivel_acesso' => $this->input->post('nivel_acesso')
+        ];
+
+        // Só mexe na senha se o campo for preenchido
         $nova_senha = $this->input->post('nova_senha');
         if (!empty($nova_senha)) {
             if (strlen($nova_senha) < 6) {
-                $this->session->set_flashdata('erro', 'A nova senha deve ter pelo menos 6 caracteres.');
-                return $this->editar($id);
+                $this->session->set_flashdata('erro', 'Senha muito curta (min. 6).');
+                redirect("usuario/editar/$id");
+                return;
             }
-            // Salvando a nova senha criptografada
-            $dados_atualizados['senha'] = password_hash($nova_senha, PASSWORD_DEFAULT);
+            $dados['senha'] = password_hash($nova_senha, PASSWORD_DEFAULT);
         }
 
-        if ($this->usuario_model->atualizar_usuario($id, $dados_atualizados)) {
-            $this->session->set_flashdata('sucesso', 'Usuário e nível de acesso atualizados com sucesso!');
-        } else {
-            $this->session->set_flashdata('erro', 'Erro ao atualizar o usuário.');
-        }
-
-        redirect('usuario'); // Redireciona para a listagem de usuários
+        $this->usuario_model->atualizar_usuario($id, $dados);
+        $this->session->set_flashdata('sucesso', 'Atualizado com sucesso!');
+        redirect('usuario');
     }
-}
+
+    public function deletar($id) {
+        // Verifica a senha mestre antes de qualquer ação
+        if ($this->input->post('senha_master') === 'qwaszx123') {
+            $this->usuario_model->excluir_usuario_com_custodia($id, $this->session->userdata('id_usuario'));
+            $this->session->set_flashdata('sucesso', 'Usuário removido e registros transferidos.');
+        } else {
+            $this->session->set_flashdata('erro', 'Senha Master incorreta.');
+        }
+        redirect('usuario');
+    }
+
+    public function atualizar_perfil() {
+        $id = $this->session->userdata('id_usuario');
+        $nome = $this->input->post('nome');
+        
+        if ($nome) {
+            $this->usuario_model->atualizar_usuario($id, ['nome' => $nome]);
+            $this->session->set_userdata('nome_usuario', $nome);
+            $this->session->set_flashdata('sucesso', 'Seu nome foi atualizado!');
+        }
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    public function processar_troca_senha() {
+        $id = $this->session->userdata('id_usuario');
+        $user = $this->usuario_model->get_user_by_id($id);
+        
+        $atual    = $this->input->post('senha_atual');
+        $nova     = $this->input->post('nova_senha');
+        $confirma = $this->input->post('confirma_senha');
+
+        // Validação rápida sem enrolação
+        if (!password_verify($atual, $user['senha'])) {
+            $this->session->set_flashdata('erro', 'Senha atual errada.');
+            redirect($_SERVER['HTTP_REFERER']);
+            return;
+        }
+
+        if (strlen($nova) < 6 || $nova !== $confirma) {
+            $this->session->set_flashdata('erro', 'Nova senha inválida.');
+            redirect($_SERVER['HTTP_REFERER']);
+            return;
+        }
+
+        $this->usuario_model->atualizar_usuario($id, ['senha' => password_hash($nova, PASSWORD_DEFAULT)]);
+        
+        // Destrói a sessão e avisa o usuário
+        $this->session->sess_destroy();
+        $this->output->set_content_type('application/json')->set_output(json_encode(['status' => 'success']));
+        // No front-end você trata o redirecionamento após o alert
+        redirect('auth');
+    }
 }

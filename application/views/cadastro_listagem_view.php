@@ -1,154 +1,113 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title><?php echo $titulo; ?></title>
-    <style>
-        body {
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .header-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
-        
-        .btn {
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: bold;
-            display: inline-block;
-            transition: 0.3s;
-        }
-        .btn-add { background-color: #28a745; color: white; }
-        .btn-add:hover { background-color: #218838; }
-        .btn-admin { background-color: #17a2b8; color: white; margin-right: 10px; }
-        .btn-logout { background-color: #dc3545; color: white; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th {
-            background-color: #f8f9fa;
-            color: #666;
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #dee2e6;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-        tr:hover { background-color: #f9f9f9; }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .badge-admin { background: #d1ecf1; color: #0c5460; }
-        .badge-comum { background: #e2e3e5; color: #383d41; }
-        
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header-area">
-        <div>
-            <h1><?php echo $titulo; ?></h1>
-            <small>Olá, <strong><?php echo $this->session->userdata('nome_usuario'); ?></strong> 
-            <span class="badge <?php echo ($this->session->userdata('nivel_acesso') == 'admin') ? 'badge-admin' : 'badge-comum'; ?>">
-                <?php echo $this->session->userdata('nivel_acesso'); ?>
-            </span></small>
-        </div>
-        <div>
-            <?php if ($this->session->userdata('nivel_acesso') === 'admin'): ?>
-                <a href="<?php echo site_url('usuario'); ?>" class="btn btn-admin">⚙️ Gerenciar Usuários</a>
-            <?php endif; ?>
-            <a href="<?php echo site_url('auth/logout'); ?>" class="btn btn-logout">Sair</a>
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h4 class="font-weight-bold text-dark mb-1">Gestão de Cadastros</h4>
+        <p class="text-muted small mb-0">Visualize e gerencie todos os registros do sistema.</p>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group shadow-sm">
+            <a href="<?= site_url('cadastro/criar'); ?>" class="btn btn-success px-4">
+                <i class="fas fa-plus mr-2"></i> Novo Cadastro
+            </a>
+            <button class="btn btn-outline-primary" type="button" data-toggle="collapse" data-target="#caixaFiltro">
+                <i class="fas fa-filter mr-1"></i> Filtros
+            </button>
         </div>
     </div>
-
-    <?php if ($this->session->flashdata('sucesso')): ?>
-        <div class="alert-success">
-            <?php echo $this->session->flashdata('sucesso'); ?>
-        </div>
-    <?php endif; ?>
-
-    <div style="margin-bottom: 20px;">
-        <a href="<?php echo site_url('cadastro/criar'); ?>" class="btn btn-add">+ Novo Cadastro</a>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Endereço</th>
-                <th>Bairro</th>
-                <th>Cadastrado Por</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!empty($cadastros)): ?>
-                <?php foreach ($cadastros as $cadastro): ?>
-                <tr>
-                    <td><?php echo $cadastro['id']; ?></td>
-                    <td><strong><?php echo $cadastro['nome']; ?></strong></td>
-                    <td><?php echo $cadastro['endereco']; ?></td>
-                    <td><?php echo $cadastro['bairro']; ?></td>
-                    <td><small><?php echo $cadastro['nome_cadastrador']; ?></small></td>
-                    <td>
-                        <a href="<?php echo site_url('cadastro/editar/'.$cadastro['id']); ?>" style="color: #007bff; text-decoration: none;">Editar</a>
-                        <?php if ($this->session->userdata('nivel_acesso') === 'admin'): ?>
-                            | <a href="<?php echo site_url('cadastro/deletar/'.$cadastro['id']); ?>" 
-                               style="color: #dc3545; text-decoration: none;" 
-                               onclick="return confirm('Tem certeza que deseja excluir o cadastro de <?php echo addslashes($cadastro['nome']); ?>?')">Excluir</a>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6" style="text-align: center; color: #999; padding: 30px;">Nenhum registro encontrado.</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
 </div>
 
-</body>
-</html>
+<?php if ($this->session->userdata('nivel_acesso') == 'admin'): ?>
+<div id="caixaFiltro" class="collapse mb-4 <?= ($this->input->get('filtro_usuario') || $this->input->get('cidade') || $this->input->get('filtro_data')) ? 'show' : ''; ?>">
+    <div class="card card-body border-0 shadow-sm bg-light">
+        <form method="GET" action="<?= site_url('cadastro/index'); ?>" class="form-row">
+            <div class="col-md-3 mb-2">
+                <label class="small font-weight-bold text-muted text-uppercase">Usuário:</label>
+                <select name="filtro_usuario" class="form-control form-control-sm">
+                    <option value="">Todos</option>
+                    <?php foreach($lista_usuarios as $u): ?>
+                        <option value="<?= $u['id']; ?>" <?= ($this->input->get('filtro_usuario') == $u['id']) ? 'selected' : ''; ?>>
+                            <?= $u['nome']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <label class="small font-weight-bold text-muted text-uppercase">Cidade:</label>
+                <input type="text" name="cidade" class="form-control form-control-sm" placeholder="Ex: João Pessoa" value="<?= $this->input->get('cidade'); ?>">
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <label class="small font-weight-bold text-muted text-uppercase">Data:</label>
+                <input type="date" name="filtro_data" class="form-control form-control-sm" value="<?= $this->input->get('filtro_data'); ?>">
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end mb-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1 mr-2 font-weight-bold">APLICAR</button>
+                <a href="<?= site_url('cadastro'); ?>" class="btn btn-white btn-sm flex-grow-1 border font-weight-bold text-muted">LIMPAR</a>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light text-muted">
+                <tr>
+                    <th class="border-0" width="70">ID</th>
+                    <th class="border-0">Nome / CPF</th>
+                    <th class="border-0">Bairro</th>
+                    <th class="border-0">Cidade</th> 
+                    <th class="border-0 text-center" width="180">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($cadastros)): foreach ($cadastros as $cadastro): ?>
+                <tr>
+                    <td class="align-middle text-muted small">#<?= $cadastro['id']; ?></td>
+                    
+                    <td class="align-middle">
+                        <span class="d-block font-weight-bold text-dark"><?= mb_strtoupper($cadastro['nome']); ?></span>
+                        <small class="text-muted">CPF: <?= $cadastro['cpf']; ?></small>
+                    </td>
+                    
+                    <td class="align-middle text-secondary">
+                        <?= $cadastro['bairro']; ?>
+                    </td>
+                    
+                    <td class="align-middle">
+                        <span class="text-dark font-weight-bold small">
+                            <i class="fas fa-map-marker-alt text-danger mr-1"></i> 
+                            <?= $cadastro['cidade'] ? mb_strtoupper($cadastro['cidade']) : '---'; ?>
+                        </span>
+                    </td>
+
+                    <td class="align-middle text-center">
+                        <div class="btn-group shadow-sm">
+                            <a href="<?= site_url('cadastro/editar/'.$cadastro['id']); ?>" class="btn btn-sm btn-white text-primary border" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            <?php if ($this->session->userdata('nivel_acesso') === 'admin'): ?>
+                                <a href="<?= site_url('cadastro/deletar/'.$cadastro['id']); ?>" 
+                                   class="btn btn-sm btn-white text-danger border" 
+                                   onclick="return confirm('Tem certeza que deseja apagar este registro?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; else: ?>
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-search fa-2x mb-3 d-block opacity-25"></i>
+                            Nenhum registro encontrado.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
