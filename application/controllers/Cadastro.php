@@ -18,22 +18,25 @@ class Cadastro extends CI_Controller {
     }
 
     // Listagem principal com aplicação de filtros
-    public function index() {
-        $data['titulo'] = "Gestão de Cadastros";
-        
-        // Pegando parâmetros da URL para filtros (GET)
-        $usuario_id  = $this->input->get('filtro_usuario');
-        $data_filtro = $this->input->get('filtro_data');
-        $cidade      = $this->input->get('cidade');
+   public function index() {
+    $data['titulo'] = "Gestão de Cadastros";
+    
+    // Pegando parâmetros da URL para filtros (GET)
+    $usuario_id  = $this->input->get('filtro_usuario');
+    $data_filtro = $this->input->get('filtro_data');
+    $cidade      = $this->input->get('cidade');
 
-        // O model já resolve a lógica de Admin ver tudo e Comum ver só o dele
-        $data['cadastros'] = $this->cadastro_model->get_cadastros_filtrados($usuario_id, $data_filtro, $cidade); 
-        $data['lista_usuarios'] = $this->usuario_model->get_all_users();
+    // 1. O model de cadastros continua com a regra de permissão (Admin vê tudo / Comum vê o dele)
+    $data['cadastros'] = $this->cadastro_model->get_cadastros_filtrados($usuario_id, $data_filtro, $cidade); 
 
-        $this->load->view('includes/header', $data);
-        $this->load->view('cadastro_listagem_view', $data);
-        $this->load->view('includes/footer');
-    }
+    // 2. AQUI ESTÁ O PULO DO GATO:
+    // Buscamos todos os usuários diretamente do banco para o filtro, ignorando a trava do Model
+    $data['lista_usuarios'] = $this->db->get('usuarios')->result_array();
+
+    $this->load->view('includes/header', $data);
+    $this->load->view('cadastro_listagem_view', $data);
+    $this->load->view('includes/footer');
+}
 
     // Abre o formulário vazio para novo cadastro
     public function criar() {

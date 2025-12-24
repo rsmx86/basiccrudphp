@@ -15,40 +15,41 @@
     </div>
 </div>
 
-<?php if ($this->session->userdata('nivel_acesso') == 'admin'): ?>
 <div id="caixaFiltro" class="collapse mb-4 <?= ($this->input->get('filtro_usuario') || $this->input->get('cidade') || $this->input->get('filtro_data')) ? 'show' : ''; ?>">
     <div class="card card-body border-0 shadow-sm bg-light">
         <form method="GET" action="<?= site_url('cadastro/index'); ?>" class="form-row">
-            <div class="col-md-3 mb-2">
-                <label class="small font-weight-bold text-muted text-uppercase">Usuário:</label>
-                <select name="filtro_usuario" class="form-control form-control-sm">
-                    <option value="">Todos</option>
-                    <?php foreach($lista_usuarios as $u): ?>
-                        <option value="<?= $u['id']; ?>" <?= ($this->input->get('filtro_usuario') == $u['id']) ? 'selected' : ''; ?>>
-                            <?= $u['nome']; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            
+            <?php if ($this->session->userdata('nivel_acesso') == 'admin'): ?>
+                <div class="col-md-3 mb-2">
+                    <label class="small font-weight-bold text-muted text-uppercase">Usuário:</label>
+                    <select name="filtro_usuario" class="form-control form-control-sm">
+                        <option value="">Todos</option>
+                        <?php foreach($lista_usuarios as $u): ?>
+                            <option value="<?= $u['id']; ?>" <?= ($this->input->get('filtro_usuario') == $u['id']) ? 'selected' : ''; ?>>
+                                <?= $u['nome']; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
 
-            <div class="col-md-3 mb-2">
+            <div class="col-md-<?= ($this->session->userdata('nivel_acesso') == 'admin') ? '3' : '4'; ?> mb-2">
                 <label class="small font-weight-bold text-muted text-uppercase">Cidade:</label>
                 <input type="text" name="cidade" class="form-control form-control-sm" placeholder="Ex: João Pessoa" value="<?= $this->input->get('cidade'); ?>">
             </div>
 
-            <div class="col-md-3 mb-2">
+            <div class="col-md-<?= ($this->session->userdata('nivel_acesso') == 'admin') ? '3' : '4'; ?> mb-2">
                 <label class="small font-weight-bold text-muted text-uppercase">Data:</label>
                 <input type="date" name="filtro_data" class="form-control form-control-sm" value="<?= $this->input->get('filtro_data'); ?>">
             </div>
 
-            <div class="col-md-3 d-flex align-items-end mb-2">
+            <div class="col-md-<?= ($this->session->userdata('nivel_acesso') == 'admin') ? '3' : '4'; ?> d-flex align-items-end mb-2">
                 <button type="submit" class="btn btn-primary btn-sm flex-grow-1 mr-2 font-weight-bold">APLICAR</button>
-                <a href="<?= site_url('cadastro'); ?>" class="btn btn-white btn-sm flex-grow-1 border font-weight-bold text-muted">LIMPAR</a>
+                <a href="<?= site_url('cadastro'); ?>" class="btn btn-white btn-sm flex-grow-1 border font-weight-bold text-muted text-center text-decoration-none">LIMPAR</a>
             </div>
         </form>
     </div>
 </div>
-<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <div class="table-responsive">
@@ -66,33 +67,24 @@
                 <?php if (!empty($cadastros)): foreach ($cadastros as $cadastro): ?>
                 <tr>
                     <td class="align-middle text-muted small">#<?= $cadastro['id']; ?></td>
-                    
                     <td class="align-middle">
                         <span class="d-block font-weight-bold text-dark"><?= mb_strtoupper($cadastro['nome']); ?></span>
                         <small class="text-muted">CPF: <?= $cadastro['cpf']; ?></small>
                     </td>
-                    
-                    <td class="align-middle text-secondary">
-                        <?= $cadastro['bairro']; ?>
-                    </td>
-                    
+                    <td class="align-middle text-secondary"><?= $cadastro['bairro']; ?></td>
                     <td class="align-middle">
                         <span class="text-dark font-weight-bold small">
                             <i class="fas fa-map-marker-alt text-danger mr-1"></i> 
                             <?= $cadastro['cidade'] ? mb_strtoupper($cadastro['cidade']) : '---'; ?>
                         </span>
                     </td>
-
                     <td class="align-middle text-center">
                         <div class="btn-group shadow-sm">
                             <a href="<?= site_url('cadastro/editar/'.$cadastro['id']); ?>" class="btn btn-sm btn-white text-primary border" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            
                             <?php if ($this->session->userdata('nivel_acesso') === 'admin'): ?>
-                                <a href="<?= site_url('cadastro/deletar/'.$cadastro['id']); ?>" 
-                                   class="btn btn-sm btn-white text-danger border" 
-                                   onclick="return confirm('Tem certeza que deseja apagar este registro?')">
+                                <a href="<?= site_url('cadastro/deletar/'.$cadastro['id']); ?>" class="btn btn-sm btn-white text-danger border" onclick="return confirm('Tem certeza?')">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             <?php endif; ?>
@@ -100,12 +92,7 @@
                     </td>
                 </tr>
                 <?php endforeach; else: ?>
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="fas fa-search fa-2x mb-3 d-block opacity-25"></i>
-                            Nenhum registro encontrado.
-                        </td>
-                    </tr>
+                    <tr><td colspan="5" class="text-center py-4">Nenhum registro.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
