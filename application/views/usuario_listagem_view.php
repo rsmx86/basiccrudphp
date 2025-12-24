@@ -4,10 +4,10 @@
         <p class="text-muted small mb-0">Gerencie acessos e níveis de permissão dos colaboradores.</p>
     </div>
     <div class="col-auto">
-        <a href="<?= site_url('usuario/criar'); ?>" class="btn btn-success shadow-sm px-4">
-            <i class="fas fa-user-plus mr-2"></i> Novo Usuário
-        </a>
-    </div>
+    <a href="<?= site_url('usuario/criar'); ?>" class="btn btn-success shadow-sm px-4">
+    <i class="fas fa-user-plus mr-2"></i> Novo Usuário
+</a>
+</div>
 </div>
 
 <?php if ($this->session->flashdata('sucesso')): ?>

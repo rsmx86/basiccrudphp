@@ -8,13 +8,16 @@ class Usuario extends CI_Controller {
         $this->load->model('usuario_model');
         $this->load->library('form_validation');
 
+        // Proteção: Só acessa se estiver logado
         if (!$this->session->userdata('logado')) {
             redirect('auth');
         }
 
+        // Métodos que usuários comuns podem acessar
         $liberados = ['perfil', 'atualizar_perfil', 'processar_troca_senha'];
         $metodo = $this->router->fetch_method();
 
+        // Se não for admin e tentar acessar algo fora dos liberados, volta para o início
         if (!in_array($metodo, $liberados) && $this->session->userdata('nivel_acesso') !== 'admin') {
             redirect('cadastro');
         }
@@ -44,8 +47,16 @@ class Usuario extends CI_Controller {
 
     public function criar() {
         $data['titulo'] = 'Novo Usuário';
+        // Criamos um array vazio para a View não dar erro de "Undefined variable"
+        $data['usuario'] = [
+            'id' => '',
+            'nome' => '',
+            'email' => '',
+            'nivel_acesso' => 'comum'
+        ];
+        
         $this->load->view('includes/header', $data);
-        $this->load->view('usuario_form_view', $data);
+        $this->load->view('usuario_editar_view', $data); 
         $this->load->view('includes/footer');
     }
 
@@ -65,7 +76,7 @@ class Usuario extends CI_Controller {
                 'admin_criador_id' => $this->session->userdata('id_usuario')
             ];
             $this->usuario_model->inserir_usuario($dados);
-            $this->session->set_flashdata('sucesso', 'Usuário criado!');
+            $this->session->set_flashdata('sucesso', 'Usuário criado com sucesso!');
             redirect('usuario');
         }
     }
@@ -123,44 +134,39 @@ class Usuario extends CI_Controller {
     }
 
     public function processar_troca_senha() {
-    // 1. Limpa qualquer saída anterior para não quebrar o JSON
-    if (ob_get_level() > 0) ob_clean();
-    header('Content-Type: application/json');
+        if (ob_get_level() > 0) ob_clean();
+        header('Content-Type: application/json');
 
-    $id = $this->session->userdata('id_usuario');
-    $user = $this->usuario_model->get_user_by_id($id);
-    
-    $atual    = $this->input->post('senha_atual');
-    $nova     = $this->input->post('nova_senha');
-    $confirma = $this->input->post('confirma_senha');
+        $id = $this->session->userdata('id_usuario');
+        $user = $this->usuario_model->get_user_by_id($id);
+        
+        $atual    = $this->input->post('senha_atual');
+        $nova     = $this->input->post('nova_senha');
+        $confirma = $this->input->post('confirma_senha');
 
-    if (!password_verify($atual, $user['senha'])) {
-        echo json_encode(['status' => 'error', 'message' => 'Senha atual incorreta.']);
-        return;
+        if (!password_verify($atual, $user['senha'])) {
+            echo json_encode(['status' => 'error', 'message' => 'Senha atual incorreta.']);
+            return;
+        }
+
+        if (strlen($nova) < 6 || $nova !== $confirma) {
+            echo json_encode(['status' => 'error', 'message' => 'A confirmação não confere ou a senha é curta.']);
+            return;
+        }
+        
+        $dados_atualizacao = [
+            'senha' => password_hash($nova, PASSWORD_DEFAULT),
+            'ultima_alteracao_senha' => date('Y-m-d H:i:s') 
+        ];
+
+        if ($this->usuario_model->atualizar_usuario($id, $dados_atualizacao)) {
+            echo json_encode([
+                'status' => 'success', 
+                'message' => 'Senha alterada com sucesso!',
+                'redirect' => site_url('auth/logout')
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Erro ao salvar no banco.']);
+        }
     }
-
-    if (strlen($nova) < 6 || $nova !== $confirma) {
-        echo json_encode(['status' => 'error', 'message' => 'A confirmação não confere ou a senha é curta.']);
-        return;
-    }
-    
-    // coluna no array DEVE ser igual ao do Banco de Dados
-    $dados_atualizacao = [
-        'senha' => password_hash($nova, PASSWORD_DEFAULT),
-        'ultima_alteracao_senha' => date('Y-m-d H:i:s') 
-    ];
-
-    if ($this->usuario_model->atualizar_usuario($id, $dados_atualizacao)) {
-        // Removemos o sess_destroy daqui por um segundo para testar o retorno
-        // O deslogar faremos via JavaScript após o alert de sucesso
-        echo json_encode([
-            'status' => 'success', 
-            'message' => 'Senha alterada com sucesso!',
-            'redirect' => site_url('auth/logout') // Crie um método logout ou redirecione para login
-        ]);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Erro ao salvar no banco.']);
-    }
-
-    }
-}
+} // Fim da Classe Usuario
