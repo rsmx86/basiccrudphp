@@ -59,4 +59,56 @@ class Relatorios extends CI_Controller {
         // 4. Gera o arquivo
         $this->pdf->generate($html, "Relatorio_Gestão_" . date('Ymd'));
     }
+	
+	public function gerar_csv() {
+    // 1. Mesma lógica de filtros do PDF
+    $usuario_id = $this->input->get('filtro_usuario');
+    $cidade     = $this->input->get('cidade');
+    $data_filtro = $this->input->get('filtro_data');
+
+    $this->db->select('c.id, c.nome, c.cpf, c.cidade, c.bairro, u.nome as cadastrado_por');
+    $this->db->from('cadastros c');
+    $this->db->join('usuarios u', 'u.id = c.usuario_id', 'left');
+
+    if ($this->session->userdata('nivel_acesso') != 'admin') {
+        $this->db->where('c.usuario_id', $this->session->userdata('usuario_id'));
+    } elseif (!empty($usuario_id)) {
+        $this->db->where('c.usuario_id', $usuario_id);
+    }
+
+    if (!empty($cidade)) $this->db->where('c.cidade', $cidade);
+    if (!empty($data_filtro)) $this->db->where('DATE(c.data_cadastro)', $data_filtro);
+
+    $resultados = $this->db->get()->result_array();
+
+    // 2. Configuração do arquivo CSV
+    $filename = "Relatorio_Gestao_".date('Ymd').".csv";
+    header("Content-Description: File Transfer");
+    header("Content-Disposition: attachment; filename=$filename");
+    header("Content-Type: application/csv; charset=UTF-8");
+
+    // 3. Abrir o "arquivo" de saída
+    $file = fopen('php://output', 'w');
+
+    // Adiciona o BOM para o Excel reconhecer caracteres especiais (acentos) corretamente, espero.
+    fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+    // Cabeçalho das colunas
+    fputcsv($file, array('ID', 'Nome', 'CPF', 'Cidade', 'Bairro', 'Cadastrado Por'), ';');
+
+    // 4. Inserir os dados ?
+    foreach ($resultados as $linha) {
+        fputcsv($file, $linha, ';');
+    }
+
+    fclose($file);
+    exit;
 }
+	
+	
+	
+	
+
+}
+
+

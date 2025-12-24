@@ -62,4 +62,23 @@
     </div>
 </div>
 
+<style>
+    /* Classe que será aplicada no elemento que deve aparecer */
+    .animate__fadeInUp {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px); /* Começa um pouco mais baixo */
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+
 <div class="main-content">
