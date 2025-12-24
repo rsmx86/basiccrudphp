@@ -28,8 +28,6 @@ class Cadastro extends CI_Controller {
 
     // 1. O model de cadastros continua com a regra de permissão (Admin vê tudo / Comum vê o dele)
     $data['cadastros'] = $this->cadastro_model->get_cadastros_filtrados($usuario_id, $data_filtro, $cidade); 
-
-    // 2. AQUI ESTÁ O PULO DO GATO:
     // Buscamos todos os usuários diretamente do banco para o filtro, ignorando a trava do Model
     $data['lista_usuarios'] = $this->db->get('usuarios')->result_array();
 

@@ -31,9 +31,12 @@ class Usuario_model extends CI_Model {
         return $this->db->order_by('u.nome', 'ASC')->get()->result_array();
     }
 
-    public function get_user_by_id($id) {
-        return $this->db->where('id', $id)->get($this->table)->row_array();
-    }
+   public function get_user_by_id($id) {
+    $this->db->select('*'); // Garante que pega todas as colunas novas
+    $this->db->from('usuarios');
+    $this->db->where('id', $id);
+    return $this->db->get()->row_array();
+}
 
     public function atualizar_usuario($id, $data) {
         return $this->db->where('id', $id)->update($this->table, $data);

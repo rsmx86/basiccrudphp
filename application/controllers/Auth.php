@@ -30,34 +30,41 @@ class Auth extends CI_Controller {
         $this->form_validation->set_rules('senha', 'Senha', 'required');
 
         if ($this->form_validation->run() == FALSE) {
-            // Se o formulário não for preenchido corretamente, recarrega a view com os erros
             $this->load->view('login_view');
         } else {
             $email = $this->input->post('email');
             $senha = $this->input->post('senha');
 
-            // O Model faz a comparação da senha usando password_verify
             $usuario = $this->usuario_model->verificar_login($email, $senha);
 
             if ($usuario) {
-                // Montamos o "pacote" de dados que ficará gravado no navegador do usuário
+                
+                // --- REGISTRO DE AUDITORIA (NOVO) ---
+                // Atualiza a coluna no banco com a data e hora atual
+                $this->usuario_model->atualizar_usuario($usuario->id, [
+                    'ultimo_acesso' => date('Y-m-d H:i:s')
+                ]);
+                // -----------------------------------
+
                 $session_data = array(
                     'id_usuario'    => $usuario->id,
                     'nome_usuario'  => $usuario->nome,
                     'email_usuario' => $usuario->email,
-                    'nivel_acesso'  => $usuario->nivel_acesso, // Importante para as travas de Admin
+                    'nivel_acesso'  => $usuario->nivel_acesso,
                     'logado'        => TRUE
                 );
                 
                 $this->session->set_userdata($session_data);
-                redirect('cadastro'); // Entrada liberada
+                redirect('cadastro'); 
             } else {
-                // Mensagem temporária que some após o próximo carregamento de página
                 $this->session->set_flashdata('erro_login', 'Email ou senha inválidos.');
                 redirect('auth');
             }
         }
     }
+
+			
+
 
     /**
      * Encerra a sessão de forma segura
