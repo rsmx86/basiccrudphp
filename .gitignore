@@ -30,3 +30,11 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 *.sublime-project
 /tests/tests/
 /tests/results/
+
+index.php
+license.txt
+readme.rst
+composer.json
+composer.lock
+user_guide/
+
