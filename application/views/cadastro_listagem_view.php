@@ -1,5 +1,9 @@
 <?php 
-    // Configurações de Ordenação Dinâmica
+    /**
+     * MOTOR DE ORDENAÇÃO
+     * Este bloco PHP inicial prepara as setAs(ícones) e os links da tabela.
+     * Se você clicar em "NOME", ele gera a URL para inverter a ordem.
+     */
     $current_sort_by = $this->input->get('sort_by') ?? 'id';
     $current_sort_order = $this->input->get('sort_order') ?? 'desc';
     $icon = ($current_sort_order == 'asc') ? 'fa-sort-up' : 'fa-sort-down';
@@ -82,8 +86,6 @@
                 <input type="hidden" name="filtro_usuario" value="<?= $this->input->get('filtro_usuario'); ?>">
                 <input type="hidden" name="cidade" value="<?= $this->input->get('cidade'); ?>">
                 <input type="hidden" name="filtro_data" value="<?= $this->input->get('filtro_data'); ?>">
-                <input type="hidden" name="sort_by" value="<?= $current_sort_by; ?>">
-                <input type="hidden" name="sort_order" value="<?= $current_sort_order; ?>">
             </form>
             <div class="border-left ml-3 pl-3">
                 <span class="text-muted small">Total: <strong class="text-dark"><?= $total_registros; ?></strong></span>
@@ -128,6 +130,7 @@
                 
                 if (!empty($cadastros)): 
                     foreach ($cadastros as $cadastro): 
+                        // REGRAS DE NEGÓCIO: Só pode editar se for o dono ou admin
                         $e_meu = ($cadastro['usuario_id'] == $id_logado);
                         $pode_editar = ($e_meu || $nivel === 'admin');
                 ?>
