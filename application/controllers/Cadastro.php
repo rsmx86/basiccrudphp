@@ -5,38 +5,63 @@ class Cadastro extends CI_Controller {
 
     public function __construct() {
         parent::__construct();
-        // Modelos e bibliotecas básicos do módulo
         $this->load->model('cadastro_model');
-        $this->load->model('usuario_model');
         $this->load->library('form_validation');
+        $this->load->library('pagination');
         $this->load->helper('form');
 
-        // Trava de segurança: Se não tiver sessão, volta pro login
-        if (!$this->session->userdata('logado')) {
-            redirect('auth');
-        }
+        if (!$this->session->userdata('logado')) redirect('auth');
     }
 
-    // Listagem principal com aplicação de filtros
-   public function index() {
-    $data['titulo'] = "Gestão de Cadastros";
-    
-    // Pegando parâmetros da URL para filtros (GET)
-    $usuario_id  = $this->input->get('filtro_usuario');
-    $data_filtro = $this->input->get('filtro_data');
-    $cidade      = $this->input->get('cidade');
+    public function index() {
+        $data['titulo'] = "Gestão de Cadastros";
+        
+        // 1. Parâmetros de Filtro e Paginação
+        $usuario_id  = $this->input->get('filtro_usuario');
+        $data_filtro = $this->input->get('filtro_data');
+        $cidade      = $this->input->get('cidade');
+        $limit       = $this->input->get('limit') ? (int)$this->input->get('limit') : 10;
+        $offset      = $this->input->get('per_page') ? (int)$this->input->get('per_page') : 0;
 
-    // 1. O model de cadastros continua com a regra de permissão (Admin vê tudo / Comum vê o dele)
-    $data['cadastros'] = $this->cadastro_model->get_cadastros_filtrados($usuario_id, $data_filtro, $cidade); 
-    // Buscamos todos os usuários diretamente do banco para o filtro, ignorando a trava do Model
-    $data['lista_usuarios'] = $this->db->get('usuarios')->result_array();
+        // 2. Configuração da Paginação
+        $config['base_url']             = site_url('cadastro/index');
+        $config['total_rows']           = $this->cadastro_model->contar_total_filtrado($usuario_id, $data_filtro, $cidade);
+        $config['per_page']             = $limit;
+        $config['page_query_string']    = TRUE;
+        $config['reuse_query_string']   = TRUE;
 
-    $this->load->view('includes/header', $data);
-    $this->load->view('cadastro_listagem_view', $data);
-    $this->load->view('includes/footer');
-}
+        // Estilização Bootstrap 4
+        $config['full_tag_open']    = '<ul class="pagination pagination-sm m-0">';
+        $config['full_tag_close']   = '</ul>';
+        $config['num_tag_open']     = '<li class="page-item">';
+        $config['num_tag_close']    = '</li>';
+        $config['cur_tag_open']     = '<li class="page-item active"><a class="page-link">';
+        $config['cur_tag_close']    = '</a></li>';
+        $config['next_tag_open']    = '<li class="page-item">';
+        $config['next_tag_close']   = '</li>';
+        $config['prev_tag_open']    = '<li class="page-item">';
+        $config['prev_tag_close']   = '</li>';
+        $config['attributes']       = array('class' => 'page-link');
+        $config['next_link']        = 'Próximo';
+        $config['prev_link']        = 'Anterior';
 
-    // Abre o formulário vazio para novo cadastro
+        $this->pagination->initialize($config);
+
+        // 3. Busca de Dados
+        $data['cadastros'] = $this->cadastro_model->get_cadastros_filtrados($usuario_id, $data_filtro, $cidade, $limit, $offset);
+        $data['paginacao'] = $this->pagination->create_links();
+        $data['total_registros'] = $config['total_rows'];
+        $data['itens_por_pagina'] = $limit;
+
+        $data['lista_usuarios'] = $this->db->get('usuarios')->result_array();
+        $data['lista_cidades'] = $this->cadastro_model->get_cidades_distintas();
+
+        $this->load->view('includes/header', $data);
+        $this->load->view('cadastro_listagem_view', $data);
+        $this->load->view('includes/footer');
+    }
+
+    // --- MANTENHA SEUS MÉTODOS CRIAR, STORE, EDITAR, ATUALIZAR E DELETAR ABAIXO ---
     public function criar() {
         $data['titulo'] = 'Novo Cadastro';
         $data['form_action'] = site_url('cadastro/store'); 
@@ -45,38 +70,27 @@ class Cadastro extends CI_Controller {
         $this->load->view('includes/footer');
     }
 
-    // Processa a inserção (POST)
     public function store() {
         $this->_regras_validacao();
-
         if ($this->form_validation->run() == FALSE) {
             $this->criar();
         } else {
             $dados = $this->_preparar_dados();
-            
-            // Dados automáticos: ID do autor e timestamp do banco
             $dados['usuario_id']   = $this->session->userdata('id_usuario');
             $dados['data_criacao'] = date('Y-m-d H:i:s'); 
-
             if ($this->cadastro_model->inserir_cadastro($dados)) {
-                $this->session->set_flashdata('sucesso', 'Cadastro realizado com sucesso!');
-            } else {
-                $this->session->set_flashdata('erro', 'Falha ao salvar no banco.');
+                $this->session->set_flashdata('sucesso', 'Cadastro realizado!');
             }
             redirect('cadastro');
         }
     }
 
-    // Abre formulário de edição já populado
     public function editar($id) {
         $data['cadastro'] = $this->cadastro_model->get_cadastro_por_id($id);
-
-        // Se o ID não existir ou o usuário tentar acessar o de outro sem ser admin, bloqueia
         if (empty($data['cadastro']) || !$this->_tem_permissao($data['cadastro'])) {
             redirect('cadastro');
             return;
         }
-
         $data['titulo'] = 'Editar Cadastro';
         $data['form_action'] = site_url('cadastro/atualizar/' . $id); 
         $this->load->view('includes/header', $data);
@@ -84,10 +98,8 @@ class Cadastro extends CI_Controller {
         $this->load->view('includes/footer');
     }
 
-    // Processa a atualização dos dados (POST)
     public function atualizar($id) {
         $this->_regras_validacao();
-
         if ($this->form_validation->run() == FALSE) {
             $this->editar($id);
         } else {
@@ -98,7 +110,6 @@ class Cadastro extends CI_Controller {
         }
     }
 
-    // Deleta o registro (Apenas Admin)
     public function deletar($id) {
         if ($this->session->userdata('nivel_acesso') === 'admin') {
             $this->cadastro_model->deletar_cadastro($id);
@@ -107,23 +118,14 @@ class Cadastro extends CI_Controller {
         redirect('cadastro');
     }
 
-    /* --- MÉTODOS DE APOIO (AUXILIARES) --- */
-
-    // Centraliza as regras do Form Validation para não repetir no store/atualizar
     private function _regras_validacao() {
         $this->form_validation->set_rules('nome', 'Nome', 'required');
-        $this->form_validation->set_rules('endereco', 'Endereço', 'required');
-        $this->form_validation->set_rules('bairro', 'Bairro', 'required');
         $this->form_validation->set_rules('cidade', 'Cidade', 'required');
-        $this->form_validation->set_rules('cep', 'CEP', 'required');
-        
-        // Lógica de CPF Único: Se for edição, ignora o próprio ID. Se for novo, exige ser único.
         $id_atual = $this->uri->segment(3); 
         $is_unique = $id_atual ? '' : '|is_unique[cadastros.cpf]';
         $this->form_validation->set_rules('cpf', 'CPF', 'required' . $is_unique);
     }
 
-    // Formata o array com o que vem do POST para mandar pro Model
     private function _preparar_dados() {
         return array(
             'nome'     => $this->input->post('nome'),
@@ -135,7 +137,6 @@ class Cadastro extends CI_Controller {
         );
     }
         
-    // Verifica se o cabra pode mexer no registro (ou é admin ou é o dono)
     private function _tem_permissao($cadastro) {
         $is_admin = ($this->session->userdata('nivel_acesso') == 'admin');
         $is_owner = ($cadastro['usuario_id'] == $this->session->userdata('id_usuario'));

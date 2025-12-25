@@ -8,16 +8,13 @@ class Usuario extends CI_Controller {
         $this->load->model('usuario_model');
         $this->load->library('form_validation');
 
-        // Proteção: Só acessa se estiver logado
         if (!$this->session->userdata('logado')) {
             redirect('auth');
         }
 
-        // Métodos que usuários comuns podem acessar
         $liberados = ['perfil', 'atualizar_perfil', 'processar_troca_senha'];
         $metodo = $this->router->fetch_method();
 
-        // Se não for admin e tentar acessar algo fora dos liberados, volta para o início
         if (!in_array($metodo, $liberados) && $this->session->userdata('nivel_acesso') !== 'admin') {
             redirect('cadastro');
         }
@@ -33,37 +30,19 @@ class Usuario extends CI_Controller {
         $this->load->view('includes/footer');
     }
 
-    public function perfil() {
-        $id = $this->session->userdata('id_usuario');
-        $data = [
-            'usuario' => $this->usuario_model->get_user_by_id($id),
-            'titulo'  => 'Meu Perfil'
-        ];
-        if (!$data['usuario']) redirect('auth');
-        $this->load->view('includes/header', $data);
-        $this->load->view('usuario_editar_view', $data);
-        $this->load->view('includes/footer');
-    }
-
     public function criar() {
         $data['titulo'] = 'Novo Usuário';
-        // Criamos um array vazio para a View não dar erro de "Undefined variable"
-        $data['usuario'] = [
-            'id' => '',
-            'nome' => '',
-            'email' => '',
-            'nivel_acesso' => 'comum'
-        ];
-        
+        $data['user'] = NULL; 
+
         $this->load->view('includes/header', $data);
-        $this->load->view('usuario_editar_view', $data); 
+        $this->load->view('usuario_form_view', $data); 
         $this->load->view('includes/footer');
     }
 
     public function salvar() {
         $this->form_validation->set_rules('nome', 'Nome', 'required|min_length[3]');
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[usuarios.email]');
-        $this->form_validation->set_rules('senha', 'Senha', 'required|min_length[6]');
+        $this->form_validation->set_rules('senha', 'Senha', 'required');
 
         if ($this->form_validation->run() == FALSE) {
             $this->criar();
@@ -72,11 +51,15 @@ class Usuario extends CI_Controller {
                 'nome'             => $this->input->post('nome'),
                 'email'            => $this->input->post('email'),
                 'senha'            => password_hash($this->input->post('senha'), PASSWORD_DEFAULT),
-                'nivel_acesso'     => 'comum',
+                'nivel_acesso'     => $this->input->post('nivel_acesso') ? $this->input->post('nivel_acesso') : 'user',
                 'admin_criador_id' => $this->session->userdata('id_usuario')
             ];
-            $this->usuario_model->inserir_usuario($dados);
-            $this->session->set_flashdata('sucesso', 'Usuário criado com sucesso!');
+
+            if ($this->usuario_model->inserir_usuario($dados)) {
+                $this->session->set_flashdata('sucesso', 'Usuário criado com sucesso! Senha: 123456');
+            } else {
+                $this->session->set_flashdata('erro', 'Erro ao inserir no banco.');
+            }
             redirect('usuario');
         }
     }
@@ -100,11 +83,6 @@ class Usuario extends CI_Controller {
         ];
         $nova_senha = $this->input->post('nova_senha');
         if (!empty($nova_senha)) {
-            if (strlen($nova_senha) < 6) {
-                $this->session->set_flashdata('erro', 'Senha muito curta (min. 6).');
-                redirect("usuario/editar/$id");
-                return;
-            }
             $dados['senha'] = password_hash($nova_senha, PASSWORD_DEFAULT);
         }
         $this->usuario_model->atualizar_usuario($id, $dados);
@@ -121,52 +99,4 @@ class Usuario extends CI_Controller {
         }
         redirect('usuario');
     }
-
-    public function atualizar_perfil() {
-        $id = $this->session->userdata('id_usuario');
-        $nome = $this->input->post('nome');
-        if ($nome) {
-            $this->usuario_model->atualizar_usuario($id, ['nome' => $nome]);
-            $this->session->set_userdata('nome_usuario', $nome);
-            $this->session->set_flashdata('sucesso', 'Perfil atualizado!');
-        }
-        redirect($_SERVER['HTTP_REFERER']);
-    }
-
-    public function processar_troca_senha() {
-        if (ob_get_level() > 0) ob_clean();
-        header('Content-Type: application/json');
-
-        $id = $this->session->userdata('id_usuario');
-        $user = $this->usuario_model->get_user_by_id($id);
-        
-        $atual    = $this->input->post('senha_atual');
-        $nova     = $this->input->post('nova_senha');
-        $confirma = $this->input->post('confirma_senha');
-
-        if (!password_verify($atual, $user['senha'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Senha atual incorreta.']);
-            return;
-        }
-
-        if (strlen($nova) < 6 || $nova !== $confirma) {
-            echo json_encode(['status' => 'error', 'message' => 'A confirmação não confere ou a senha é curta.']);
-            return;
-        }
-        
-        $dados_atualizacao = [
-            'senha' => password_hash($nova, PASSWORD_DEFAULT),
-            'ultima_alteracao_senha' => date('Y-m-d H:i:s') 
-        ];
-
-        if ($this->usuario_model->atualizar_usuario($id, $dados_atualizacao)) {
-            echo json_encode([
-                'status' => 'success', 
-                'message' => 'Senha alterada com sucesso!',
-                'redirect' => site_url('auth/logout')
-            ]);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Erro ao salvar no banco.']);
-        }
-    }
-} // Fim da Classe Usuario
+}

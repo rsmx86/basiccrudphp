@@ -1,13 +1,10 @@
-</div> 
-
-<footer class="text-center py-4 text-muted small">
+</div> <footer class="text-center py-4 text-muted small">
     &copy; <?= date('Y'); ?> Sistema de Gestão - Todos os direitos reservados.
 </footer>
 
 <div class="modal fade" id="modalPerfil" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
-            
             <div id="viewDadosPerfil">
                 <div class="modal-header bg-dark text-white border-0">
                     <h5 class="modal-title font-weight-bold"><i class="fas fa-user-circle mr-2"></i> Meus Dados</h5>
@@ -51,7 +48,6 @@
                     </form>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -62,14 +58,17 @@
 
 <script>
 $(document).ready(function(){
+    // Máscaras para CPF e CEP
     $('.cpf-mask').mask('000.000.000-00');
     $('.cep-mask').mask('00000-000');
     
+    // Efeito de "Salvando" no botão do perfil
     $('#viewDadosPerfil form').on('submit', function() {
         $(this).find('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Salvando...').prop('disabled', true);
     });
 });
 
+// Função para alternar entre dados e troca de senha no modal
 function alternarTelaSenha(showSenha) {
     if(showSenha) {
         $('#viewDadosPerfil').fadeOut(200, function(){ $('#viewTrocarSenha').fadeIn(200); });
