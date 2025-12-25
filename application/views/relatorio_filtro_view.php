@@ -45,7 +45,8 @@
                 </button>
             </div>
         </div>
-        <div class="mt-2">
+
+        <div class="mt-2 mb-4">
             <a href="<?= site_url('relatorios/clientes'); ?>" class="text-muted small">
                 <i class="fas fa-times-circle"></i> Limpar Filtros
             </a>
@@ -54,17 +55,44 @@
 
     <div class="mt-5 pt-3 border-top">
         <?php 
-        // Exibe opções se qualquer filtro for preenchido
-        $exibir_opcoes = ($this->input->get('cidade') || $this->input->get('filtro_usuario') || $this->input->get('data_inicio')); 
+            // Lógica para verificar se filtros foram aplicados
+            $exibir_opcoes = ($this->input->get('cidade') || $this->input->get('filtro_usuario') || $this->input->get('data_inicio') || $this->input->get('data_fim')); 
         ?>
 
         <?php if ($exibir_opcoes): ?>
-            <div class="mt-4 animate__animated animate__fadeInUp">
-                <div class="alert alert-info shadow-sm">
-                    <i class="fas fa-check-circle"></i> <strong>Filtros aplicados!</strong> Selecione o formato para exportação abaixo:
+            <div class="animate__animated animate__fadeInUp">
+                
+                <div class="card shadow-sm border-0 mb-4 bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="text-muted">Filtros aplicados!</h5>
+                        <p class="small text-muted">Visualize uma amostra dos dados antes de exportar o arquivo completo:</p>
+                        <button type="button" id="btnPreview" class="btn btn-info px-4 shadow-sm">
+                            <i class="fas fa-eye mr-2"></i> Visualizar Prévia dos Dados
+                        </button>
+                    </div>
+                </div>
+
+                <div id="areaPreview" style="display: none;" class="mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h6 class="mb-0 font-weight-bold text-primary">
+                                <i class="fas fa-table mr-2"></i>Registros encontrados (Prévia do Relatório)
+                            </h6>
+                            <button type="button" class="close" id="btnFecharPreview">&times;</button>
+                        </div>
+                        <div class="card-body p-0" id="conteudoPreview">
+                            </div>
+                        <div class="card-footer bg-light text-center small text-muted">
+                            Esta é uma prévia limitada. Utilize os botões de exportação abaixo para obter o arquivo completo.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info shadow-sm mb-3">
+                    <i class="fas fa-check-circle"></i> Selecione o formato para exportação abaixo:
                 </div>
                 
-                <div class="d-flex pb-4">
+                <div class="d-flex pb-5">
                     <a href="<?= site_url('relatorios/gerar_pdf?' . $_SERVER['QUERY_STRING']); ?>" target="_blank" class="btn btn-danger btn-lg mr-2 shadow">
                         <i class="fas fa-file-pdf mr-1"></i> Exportar PDF
                     </a>
@@ -74,13 +102,46 @@
                     </a>
                 </div>
             </div>
+
         <?php else: ?>
             <div class="mt-4 text-center p-5 border rounded bg-light">
                 <p class="text-muted">
                     <i class="fas fa-arrow-up d-block mb-2" style="font-size: 24px;"></i>
-                    Selecione os filtros acima e clique em <strong>Filtrar</strong> para gerar as opções de exportação.
+                    Selecione os filtros acima e clique em <strong>Filtrar</strong> para liberar a prévia e as opções de exportação.
                 </p>
             </div>
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPreview = document.getElementById('btnPreview');
+    const btnFechar = document.getElementById('btnFecharPreview');
+    const area = document.getElementById('areaPreview');
+    const conteudo = document.getElementById('conteudoPreview');
+
+    if (btnPreview) {
+        btnPreview.addEventListener('click', function() {
+            area.style.display = 'block';
+            conteudo.innerHTML = '<div class="p-5 text-center"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><br><span class="mt-2 d-block">Buscando dados...</span></div>';
+
+            fetch('<?= site_url("relatorios/preview?" . $_SERVER["QUERY_STRING"]); ?>')
+                .then(response => response.text())
+                .then(html => {
+                    conteudo.innerHTML = html;
+                    area.scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(err => {
+                    conteudo.innerHTML = '<div class="alert alert-danger m-3">Erro ao carregar prévia. Tente exportar direto.</div>';
+                });
+        });
+    }
+
+    if (btnFechar) {
+        btnFechar.addEventListener('click', function() {
+            area.style.display = 'none';
+        });
+    }
+});
+</script>
