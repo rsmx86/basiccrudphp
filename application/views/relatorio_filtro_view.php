@@ -1,8 +1,13 @@
 <div class="container mt-4">
     <h3><i class="fas fa-filter"></i> Filtrar Relatório de Clientes</h3>
     <hr>
+
+    <div id="alerta-data" class="alert alert-danger d-none animate__animated animate__fadeIn mb-3">
+        <i class="fas fa-exclamation-triangle mr-2"></i> 
+        <strong>Atenção!</strong> Selecione ao menos uma data (Início ou Fim) para gerar o relatório.
+    </div>
     
-    <form action="<?php echo site_url('relatorios/clientes'); ?>" method="GET">
+    <form id="formRelatorio" action="<?php echo site_url('relatorios/clientes'); ?>" method="GET">
         <div class="row">
             <div class="col-md-3">
                 <label class="font-weight-bold">Cidade:</label>
@@ -116,11 +121,30 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formRelatorio');
+    const alerta = document.getElementById('alerta-data');
     const btnPreview = document.getElementById('btnPreview');
     const btnFechar = document.getElementById('btnFecharPreview');
     const area = document.getElementById('areaPreview');
     const conteudo = document.getElementById('conteudoPreview');
 
+    // 1. VALIDAÇÃO DE DATAS NO FORMULÁRIO
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const dataInicio = document.querySelector('input[name="data_inicio"]').value;
+            const dataFim = document.querySelector('input[name="data_fim"]').value;
+
+            // Se ambas as datas estiverem vazias, bloqueia
+            if (!dataInicio && !dataFim) {
+                e.preventDefault(); 
+                alerta.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return false;
+            }
+        });
+    }
+
+    // 2. LOGICA DA PRÉVIA (FETCH API)
     if (btnPreview) {
         btnPreview.addEventListener('click', function() {
             area.style.display = 'block';
@@ -138,10 +162,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 3. FECHAR PRÉVIA
     if (btnFechar) {
         btnFechar.addEventListener('click', function() {
             area.style.display = 'none';
         });
     }
+
+    // 4. REMOVER ALERTA AO SELECIONAR UMA DATA
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value !== "") {
+                alerta.classList.add('d-none');
+            }
+        });
+    });
 });
 </script>
