@@ -3,13 +3,24 @@
 <head>
     <title>Relatório de Cadastros</title>
     <style>
+        /* SALÃO DE BELEZA DO PDF: 
+           Diferente do site, aqui usamos fontes padrão (Helvetica) para o PDF não ficar pesado.
+           Piada: "Aqui o Bootstrap não te ajuda, você está por conta própria!" */
         body { font-family: 'Helvetica', sans-serif; font-size: 11px; color: #333; margin: 20px; }
+        
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #444; padding-bottom: 10px; }
         .header h2 { margin: 0; color: #000; font-size: 18px; }
+        
+        /* Caixa de resumo: Onde o chefe bate o olho primeiro */
         .info-box { background: #f8f9fa; padding: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
+        
         table { width: 100%; border-collapse: collapse; }
+        
+        /* Cabeçalho da tabela: cinza para economizar tinta de impressora */
         th { background-color: #eee; border: 1px solid #999; padding: 8px; text-align: left; font-size: 9px; }
         td { border: 1px solid #ccc; padding: 6px; }
+        
+        /* O RODAPÉ FIXO: Ele aparece no final da folha */
         .footer { position: fixed; bottom: -10px; width: 100%; text-align: right; font-size: 9px; border-top: 1px solid #ddd; padding-top: 5px; }
     </style>
 </head>
@@ -32,7 +43,8 @@
                         Cidades: <?= $this->input->get('cidade') ? mb_strtoupper($this->input->get('cidade')) : 'TODAS AS CIDADES'; ?> | 
                         Usuários: 
                         <?php 
-                            // Lógica para pegar o nome do usuário filtrado
+                            // O "DETETIVE" DE NOMES:
+                            // Como no banco só temos o ID, esse loop procura o nome do usuário para não imprimir apenas um número feio no PDF, kk.
                             $user_id = $this->input->get('filtro_usuario');
                             $nome_user = 'TODOS OS USUÁRIOS';
                             if(!empty($user_id) && !empty($usuarios)){

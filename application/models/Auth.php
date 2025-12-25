@@ -30,11 +30,11 @@ class Auth extends CI_Controller {
             $email = $this->input->post('email');
             $senha = $this->input->post('senha');
 
-            // 2. Chama o Model para verificar as credenciais
+            //  Chama o Model para verificar as credenciais
             $usuario = $this->usuario_model->verificar_login($email, $senha);
 
             if ($usuario) {
-                // 3. Sucesso: Cria a sessão e armazena os dados importantes
+                //  Sucesso: Cria a sessão e armazena os dados importantes
                 $session_data = array(
                     'id_usuario'    => $usuario->id,
                     'nome_usuario'  => $usuario->nome,
@@ -45,7 +45,7 @@ class Auth extends CI_Controller {
                 $this->session->set_userdata($session_data);
                 redirect('cadastro'); // Redireciona para o Controller de CRUD
             } else {
-                // 4. Falha: Exibe mensagem de erro
+                //  Falha: Exibe mensagem de erro
                 $this->session->set_flashdata('erro_login', 'Email ou senha inválidos.');
                 redirect('auth');
             }

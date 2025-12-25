@@ -10,19 +10,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* DESIGN GLOBAL: Se quiser mudar a cor do fundo ou a letra do site todo, é aqui! */
         body { background-color: #f0f2f5; font-family: 'Inter', sans-serif; }
         .navbar-top { background: #1a1d21; padding: 12px 0; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
         .nav-container, .main-content { max-width: 1200px !important; margin-left: auto !important; margin-right: auto !important; }
         .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
         .nav-brand { font-size: 1.4rem !important; font-weight: 800; color: #fff !important; text-decoration: none !important; margin-left: 10px; }
         .hamburger-menu { background: none; border: none; color: white; font-size: 1.6rem; cursor: pointer; padding: 5px 10px; }
+        
+        /* CONTEÚDO BRANCO: Onde as tabelas e formulários aparecem */
         .main-content { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); min-height: 80vh; margin-bottom: 40px; }
     </style>
 </head>
 <body>
 
 <?php
-// Busca dados atualizados do usuário logado para o Modal
+/**
+ * O BUSCADOR DE DADOS:
+ * Se o sistema não "conhece" o usuário ainda, ele vai no Model buscar as infos.
+ * (Funciona como o RG do usuário para o Modal de Perfil)
+ */
 if (!isset($usuario)) {
     $CI =& get_instance();
     $CI->load->model('usuario_model');
@@ -129,6 +136,10 @@ if (!isset($usuario)) {
 </div>
 
 <script>
+/**
+ * SCRIPT DE TROCA DE SENHA:
+ * Faz o meio de campo entre esta tela e o Controller 'usuario/processar_troca_senha'.
+ */
 document.addEventListener('DOMContentLoaded', function() {
     const formSenha = document.getElementById('formTrocaSenha');
     if (formSenha) {
