@@ -14,8 +14,3 @@ Projeto desenvolvido em **PHP (CodeIgniter 3)** para gerenciamento de clientes, 
 - Bootstrap 4 (Interface)
 - Dompdf (Gerador de PDF)
 
-## 📋 Como instalar
-1. Clone o repositório.
-2. Importe o arquivo SQL da pasta `/docs` no seu MySQL.
-3. Ajuste as configurações de banco em `application/config/database.php`.
-4. Configure sua base_url em `application/config/config.php`.
